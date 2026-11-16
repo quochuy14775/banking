@@ -5,10 +5,13 @@ import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import AppLogo from '@/components/app-logo';
 import { useTheme } from '@/hooks/use-theme';
 
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
+// Phải khớp `imageWidth` của expo-splash-screen trong app.json.
+const SPLASH_LOGO_SIZE = 120;
 
 export function AnimatedSplashOverlay() {
   const theme = useTheme();
@@ -36,7 +39,8 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
+  // Cùng logo, cỡ và nền xanh với splash native (app.json) để chuyển cảnh liền mạch.
+  const image = <AppLogo size={SPLASH_LOGO_SIZE} variant="onPrimary" />;
 
   return animate ? (
     <Animated.View

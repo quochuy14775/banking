@@ -2,17 +2,21 @@ import { SymbolView } from 'expo-symbols';
 import { useEffect, useId, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedProps,
   useSharedValue,
   withRepeat,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
 import { FinancialHealthIcons } from '@/constants/icons';
-import { Spacing, type ThemeColors } from '@/constants/theme';
+import { AmbientLoops } from '@/constants/motion';
+import { Spacing, type ThemeColors, IconSize } from '@/constants/theme';
 import { getHealthStatus, getScoreChange, getScoreDirection } from '@/helpers';
+import { useAmbientLoop } from '@/hooks/use-ambient-loop';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useI18n, type Translate } from '@/i18n';
@@ -94,7 +98,7 @@ export default function FinancialScoreCard({ data, onPress }: Props) {
             </View>
           </View>
           <View style={styles.changeRow}>
-            <SymbolView name={TREND_ICONS[direction]} size={14} tintColor={changeColor} />
+            <SymbolView name={TREND_ICONS[direction]} size={IconSize.sm} tintColor={changeColor} />
             <Text style={[styles.change, { color: changeColor }]}>{changeText}</Text>
           </View>
           {data.percentile !== undefined && (
@@ -126,7 +130,7 @@ export default function FinancialScoreCard({ data, onPress }: Props) {
             style={[styles.chip, { backgroundColor: item.ok ? theme.successSoft : theme.warningSoft }]}>
             <SymbolView
               name={item.ok ? FinancialHealthIcons.ok : FinancialHealthIcons.warning}
-              size={13}
+              size={IconSize.sm}
               tintColor={item.ok ? theme.success : theme.warning}
             />
             <Text style={[styles.chipText, { color: item.ok ? theme.success : theme.warning }]}>
@@ -247,33 +251,47 @@ function ScoreRing({ score, maxScore, theme, styles }: RingProps) {
   const display = useCountUp(score);
 
   const fill = useSharedValue(0);
-  const travel = useSharedValue(0);
-  const breathe = useSharedValue(0);
-  const ping = useSharedValue(0);
+  const beat = useSharedValue(0);
+  const running = useAmbientLoop();
 
   useEffect(() => {
     fill.set(withTiming(ratio, { duration: FILL_DURATION, easing: Easing.bezier(0.16, 1, 0.3, 1) }));
-    travel.set(withRepeat(withTiming(1, { duration: 2400, easing: Easing.linear }), -1, false));
-    breathe.set(withRepeat(withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }), -1, true));
-    ping.set(withRepeat(withTiming(1, { duration: 1600, easing: Easing.out(Easing.ease) }), -1, false));
-  }, [ratio, fill, travel, breathe, ping]);
+  }, [ratio, fill]);
+
+  // Nhịp tim ở đầu cung điểm: đập hai nhịp "thình thịch" rồi nghỉ ~2/3 chu kỳ. Dừng thì đứng yên.
+  useEffect(() => {
+    if (!running) {
+      cancelAnimation(beat);
+      beat.set(0);
+      return;
+    }
+    const { cycle, firstBeat, secondBeat } = AmbientLoops.heartbeat;
+    const step = cycle * 0.08;
+    const ease = Easing.out(Easing.cubic);
+    beat.set(
+      withRepeat(
+        withSequence(
+          withTiming(firstBeat, { duration: step, easing: ease }),
+          withTiming(0, { duration: step, easing: ease }),
+          withTiming(secondBeat, { duration: step, easing: ease }),
+          withTiming(0, { duration: step, easing: ease }),
+          withTiming(0, { duration: cycle - step * 4 }),
+        ),
+        -1,
+      ),
+    );
+    return () => cancelAnimation(beat);
+  }, [running, beat]);
 
   const arcProps = useAnimatedProps(() => ({
     strokeDashoffset: CIRCUMFERENCE * (1 - fill.get()),
   }));
 
-  const glowProps = useAnimatedProps(() => {
-    const angle = travel.get() * fill.get() * 2 * Math.PI;
-    return {
-      cx: CENTER + RADIUS * Math.cos(angle),
-      cy: CENTER + RADIUS * Math.sin(angle),
-      r: 5 + 3 * breathe.get(),
-    };
-  });
-
+  // Chấm đầu cung nở ra theo nhịp, kèm một quầng mờ lan ra rồi tan.
+  const tipProps = useAnimatedProps(() => ({ r: 4 + 1.6 * beat.get() }));
   const pingProps = useAnimatedProps(() => ({
-    r: 5 + 6 * ping.get(),
-    opacity: 0.45 * (1 - ping.get()),
+    r: 5 + 6 * beat.get(),
+    opacity: 0.35 * beat.get(),
   }));
 
   return (
@@ -284,11 +302,6 @@ function ScoreRing({ score, maxScore, theme, styles }: RingProps) {
             <Stop offset="0" stopColor={theme.scoreStart} />
             <Stop offset="1" stopColor={theme.scoreEnd} />
           </LinearGradient>
-          <RadialGradient id={`glow${id}`}>
-            <Stop offset="0" stopColor={theme.backgroundElement} stopOpacity={1} />
-            <Stop offset="0.4" stopColor={theme.scoreGlow} stopOpacity={0.9} />
-            <Stop offset="1" stopColor={theme.scoreEnd} stopOpacity={0} />
-          </RadialGradient>
         </Defs>
         <Circle cx={CENTER} cy={CENTER} r={RADIUS} fill="none" stroke={theme.scoreTrack} strokeWidth={STROKE} />
         <AnimatedCircle
@@ -302,15 +315,14 @@ function ScoreRing({ score, maxScore, theme, styles }: RingProps) {
           strokeDasharray={[CIRCUMFERENCE, CIRCUMFERENCE]}
           animatedProps={arcProps}
         />
-        <AnimatedCircle fill={`url(#glow${id})`} animatedProps={glowProps} />
         <AnimatedCircle cx={tipX} cy={tipY} fill={theme.scoreEnd} animatedProps={pingProps} />
-        <Circle
+        <AnimatedCircle
           cx={tipX}
           cy={tipY}
-          r={4}
           fill={theme.backgroundElement}
           stroke={theme.scoreEnd}
           strokeWidth={2}
+          animatedProps={tipProps}
         />
       </Svg>
       <View style={styles.ringCenter} pointerEvents="none">

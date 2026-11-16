@@ -5,13 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ProfileIdentityCard from '@/components/profile-identity-card';
 import ProfileInfoSection from '@/components/profile-info-section';
 import { ProfileIcons } from '@/constants/icons';
-import { Spacing, Typography, type ThemeColors } from '@/constants/theme';
+import { Spacing, Typography, type ThemeColors, IconSize } from '@/constants/theme';
 import { useConfirmLogout } from '@/hooks/use-confirm-logout';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
 import { useAuth } from '@/lib/authStore';
-import { mockUser } from '@/lib/mockData';
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -19,7 +18,8 @@ export default function ProfileScreen() {
   const { t } = useI18n();
   const { user } = useAuth();
   const confirmLogout = useConfirmLogout();
-  const profile = user ?? mockUser;
+  if (!user) return null;
+  const profile = user;
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -31,7 +31,7 @@ export default function ProfileScreen() {
           accessibilityRole="button"
           accessibilityLabel={t('profile.edit')}
           style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
-          <SymbolView name={ProfileIcons.edit} size={18} tintColor={theme.primary} />
+          <SymbolView name={ProfileIcons.edit} size={IconSize.lg} tintColor={theme.primary} />
         </Pressable>
       </View>
 
@@ -42,7 +42,7 @@ export default function ProfileScreen() {
           onPress={confirmLogout}
           accessibilityRole="button"
           style={({ pressed }) => [styles.logout, pressed && styles.pressed]}>
-          <SymbolView name={ProfileIcons.logout} size={17} tintColor={theme.danger} />
+          <SymbolView name={ProfileIcons.logout} size={IconSize.lg} tintColor={theme.danger} />
           <Text style={styles.logoutText}>{t('common.logout')}</Text>
         </Pressable>
       </ScrollView>

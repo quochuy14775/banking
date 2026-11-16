@@ -17,3 +17,13 @@ export interface Account {
   maturityDate?: string;
   card?: AccountCard;
 }
+
+export interface GetAccountsRequest {
+  userId: string;
+}
+
+export interface GetAccountsResponse {
+  success: boolean;
+  items: Account[];
+  message?: string;
+}

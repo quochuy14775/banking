@@ -1,3 +1,4 @@
+import { router, usePathname } from 'expo-router';
 import { Tabs, TabList, TabSlot, TabTrigger, type TabTriggerSlotProps } from 'expo-router/ui';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useRef, useState } from 'react';
@@ -8,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QuickActionMenu from '@/components/quick-action-menu';
 import { CommonIcons, TabBarIcons, type IconName } from '@/constants/icons';
 import type { ThemeColors } from '@/constants/theme';
+import { IconSize } from '@/constants/theme';
 import { useQuickActions } from '@/hooks/use-quick-actions';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -18,6 +20,9 @@ const BAR_SIDE = 20;
 // Phải khớp nút đóng 60px mà QuickActionMenu vẽ đè lên FAB tại anchor.
 const FAB_SIZE = 60;
 const FAB_OVERHANG = 12;
+const FULL_SCREEN_ROUTES = ['/transfer', '/qr', '/bills', '/kyc', '/smart-otp', '/history', '/statement'];
+// Chức năng nhanh đã có màn riêng; còn lại hiện "Sắp ra mắt".
+const QUICK_ACTION_ROUTES = { transfer: '/transfer', qr: '/qr', bills: '/bills', history: '/history' } as const;
 
 type Styles = ReturnType<typeof createStyles>;
 
@@ -31,6 +36,8 @@ export default function AppTabs() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const barBottom = Math.max(insets.bottom - 6, 14);
+  // Màn toàn trang (không có nút tab) thì ẩn thanh tab và FAB.
+  const showBar = !FULL_SCREEN_ROUTES.includes(usePathname());
 
   const openMenu = () => {
     if (actions.length === 0) return;
@@ -44,7 +51,9 @@ export default function AppTabs() {
     <Tabs style={styles.root}>
       <TabSlot style={styles.slot} />
 
-      <TabList accessibilityRole="tablist" style={[styles.bar, { marginBottom: barBottom }]}>
+      <TabList
+        accessibilityRole="tablist"
+        style={[styles.bar, { marginBottom: barBottom }, !showBar && styles.hidden]}>
         <TabTrigger name="index" href="/" asChild>
           <TabButton
             icon={TabBarIcons.home.default}
@@ -62,8 +71,16 @@ export default function AppTabs() {
             {t('tabs.profile')}
           </TabButton>
         </TabTrigger>
+        <TabTrigger name="transfer" href="/transfer" />
+        <TabTrigger name="qr" href="/qr" />
+        <TabTrigger name="bills" href="/bills" />
+        <TabTrigger name="kyc" href="/kyc" />
+        <TabTrigger name="smart-otp" href="/smart-otp" />
+        <TabTrigger name="history" href="/history" />
+        <TabTrigger name="statement" href="/statement" />
       </TabList>
 
+      {showBar && (
       <Pressable
         ref={fabRef}
         onPress={openMenu}
@@ -74,8 +91,9 @@ export default function AppTabs() {
           { bottom: barBottom + BAR_HEIGHT + FAB_OVERHANG - FAB_SIZE },
           pressed && styles.fabPressed,
         ]}>
-        <SymbolView name={CommonIcons.plus} size={28} tintColor={theme.onPrimary} />
+        <SymbolView name={CommonIcons.plus} size={IconSize.xxxl} tintColor={theme.onPrimary} />
       </Pressable>
+      )}
 
       <QuickActionMenu
         visible={menuVisible}
@@ -84,6 +102,10 @@ export default function AppTabs() {
         onClose={() => setMenuVisible(false)}
         onSelect={(action) => {
           setMenuVisible(false);
+          if (action.key in QUICK_ACTION_ROUTES) {
+            router.navigate(QUICK_ACTION_ROUTES[action.key as keyof typeof QUICK_ACTION_ROUTES]);
+            return;
+          }
           Alert.alert(t(`quickActions.${action.key}`), t('common.comingSoon'));
         }}
       />
@@ -121,7 +143,7 @@ function TabButton({ icon, activeIcon, styles, isFocused, children, ...props }: 
       style={({ pressed }) => [styles.tab, pressed && styles.tabPressed]}>
       <View style={styles.iconWrap}>
         <Animated.View style={[styles.indicator, indicatorStyle]} />
-        <SymbolView name={isFocused ? activeIcon : icon} size={22} tintColor={color} />
+        <SymbolView name={isFocused ? activeIcon : icon} size={IconSize.xxl} tintColor={color} />
       </View>
       <Text style={[styles.label, { color }, isFocused && styles.labelActive]} numberOfLines={1}>
         {children}
@@ -134,6 +156,7 @@ function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
     slot: { flex: 1 },
+    hidden: { display: 'none' },
     bar: {
       flexDirection: 'row',
       alignItems: 'center',

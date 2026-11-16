@@ -6,30 +6,43 @@ import {
   TabTriggerSlotProps,
   TabListProps,
 } from 'expo-router/ui';
+import { usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
 
+import AppLogo from '@/components/app-logo';
 import { CommonIcons } from '@/constants/icons';
 import { useI18n } from '@/i18n';
-import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Colors, MaxContentWidth, Spacing, IconSize } from '@/constants/theme';
 
 import { ExternalLink } from './external-link';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
+// Màn toàn trang thì ẩn thanh tab (vẫn render để route ẩn hoạt động).
+const FULL_SCREEN_ROUTES = ['/transfer', '/qr', '/bills', '/kyc', '/smart-otp', '/history', '/statement'];
+
 export default function AppTabs() {
   const { t } = useI18n();
+  const hidden = FULL_SCREEN_ROUTES.includes(usePathname());
   return (
     <Tabs>
       <TabSlot style={{ height: '100%' }} />
       <TabList asChild>
-        <CustomTabList>
+        <CustomTabList style={hidden ? styles.hidden : undefined}>
           <TabTrigger name="home" href="/" asChild>
             <TabButton>{t('tabs.home')}</TabButton>
           </TabTrigger>
           <TabTrigger name="profile" href="/profile" asChild>
             <TabButton>{t('tabs.profile')}</TabButton>
           </TabTrigger>
+          <TabTrigger name="transfer" href="/transfer" />
+          <TabTrigger name="qr" href="/qr" />
+          <TabTrigger name="bills" href="/bills" />
+          <TabTrigger name="kyc" href="/kyc" />
+          <TabTrigger name="smart-otp" href="/smart-otp" />
+          <TabTrigger name="history" href="/history" />
+          <TabTrigger name="statement" href="/statement" />
         </CustomTabList>
       </TabList>
     </Tabs>
@@ -52,15 +65,17 @@ export function TabButton({ children, isFocused, ...props }: Omit<TabTriggerSlot
 }
 
 export function CustomTabList(props: TabListProps) {
+  const { t } = useI18n();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
 
   return (
-    <View {...props} style={styles.tabListContainer}>
+    <View {...props} style={[styles.tabListContainer, props.style]}>
       <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
-          Expo Starter
-        </ThemedText>
+        <View style={styles.brand}>
+          <AppLogo size={24} />
+          <ThemedText type="smallBold">{t('common.appName')}</ThemedText>
+        </View>
 
         {props.children}
 
@@ -70,7 +85,7 @@ export function CustomTabList(props: TabListProps) {
             <SymbolView
               tintColor={colors.text}
               name={CommonIcons.externalLink}
-              size={12}
+              size={IconSize.xs}
             />
           </Pressable>
         </ExternalLink>
@@ -98,12 +113,16 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },
-  brandText: {
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
     marginRight: 'auto',
   },
   pressed: {
     opacity: 0.7,
   },
+  hidden: { display: 'none' },
   tabButtonView: {
     paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.three,

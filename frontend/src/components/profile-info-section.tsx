@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CommonIcons } from '@/constants/icons';
-import { Spacing, type ThemeColors } from '@/constants/theme';
-import { maskEmail, maskIdNumber, maskPhone } from '@/helpers';
+import { Spacing, type ThemeColors, IconSize } from '@/constants/theme';
+import { formatFullDate, maskDateOfBirth, maskEmail, maskIdNumber, maskPhone } from '@/helpers';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
@@ -32,6 +32,17 @@ export default function ProfileInfoSection({ user }: Props) {
   if (user.idNumber) {
     rows.push({ label: t('profile.info.idNumber'), value: user.idNumber, masked: maskIdNumber(user.idNumber) });
   }
+  if (user.dateOfBirth) {
+    rows.push({
+      label: t('profile.info.dateOfBirth'),
+      value: formatFullDate(user.dateOfBirth),
+      masked: maskDateOfBirth(user.dateOfBirth),
+    });
+  }
+  if (user.gender) {
+    const gender = t(`profile.info.genders.${user.gender}`);
+    rows.push({ label: t('profile.info.gender'), value: gender, masked: gender });
+  }
   if (user.address) rows.push({ label: t('profile.info.address'), value: user.address, masked: user.address });
 
   if (rows.length === 0) return null;
@@ -48,7 +59,7 @@ export default function ProfileInfoSection({ user }: Props) {
           style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}>
           <SymbolView
             name={revealed ? CommonIcons.eye : CommonIcons.eyeSlash}
-            size={18}
+            size={IconSize.lg}
             tintColor={theme.primary}
           />
         </Pressable>

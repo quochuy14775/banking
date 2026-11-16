@@ -1,5 +1,7 @@
 import type { User } from '@/models';
 
+import { buildVietQr } from './vietqr';
+
 const digitsOf = (value: string) => value.replace(/\D/g, '');
 
 export function removeDiacritics(value: string): string {
@@ -30,6 +32,7 @@ export function maskIdNumber(idNumber: string): string {
   return `${d.slice(0, 4)} **** ${d.slice(-4)}`;
 }
 
-export function buildReceiveQrPayload(user: Pick<User, 'accountNumber' | 'fullName'>): string {
-  return `VIETBANK|${digitsOf(user.accountNumber)}|${toCardName(user.fullName)}`;
+/** Mã VietQR tĩnh để nhận tiền vào tài khoản của user tại ngân hàng có `bankBin`. */
+export function buildReceiveQrPayload(user: Pick<User, 'accountNumber' | 'fullName'>, bankBin: string): string {
+  return buildVietQr({ bin: bankBin, accountNumber: digitsOf(user.accountNumber), name: toCardName(user.fullName) });
 }

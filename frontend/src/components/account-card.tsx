@@ -1,10 +1,25 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  FadeIn,
+  LayoutAnimationConfig,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { CommonIcons } from '@/constants/icons';
-import { BrandColors, Fonts, Spacing, type ThemeColors } from '@/constants/theme';
+import { AmbientLoops } from '@/constants/motion';
+import { BrandColors, Fonts, MoneyText, Spacing, type ThemeColors, IconSize } from '@/constants/theme';
 import { formatVND, groupDigits, maskNumber } from '@/helpers';
+import { useAmbientLoop } from '@/hooks/use-ambient-loop';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
@@ -23,6 +38,7 @@ export default function AccountCard({ account, hidden, onToggleHidden }: Props) 
   const { card } = account;
   const rawNumber = card?.cardNumber ?? account.number;
   const displayNumber = hidden ? maskNumber(rawNumber) : groupDigits(rawNumber);
+  const loop = useAmbientLoop();
 
   return (
     <View style={styles.shadow}>
@@ -47,11 +63,8 @@ export default function AccountCard({ account, hidden, onToggleHidden }: Props) 
             <View style={styles.chipLineV} />
           </View>
           <View style={styles.contactless}>
-            {[8, 13, 18].map((size) => (
-              <View
-                key={size}
-                style={[styles.wave, { width: size, height: size * 1.6, borderRadius: size }]}
-              />
+            {[8, 13, 18].map((size, index) => (
+              <NfcWave key={size} size={size} index={index} running={loop} style={styles.wave} />
             ))}
           </View>
         </View>
@@ -63,22 +76,30 @@ export default function AccountCard({ account, hidden, onToggleHidden }: Props) 
           style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}>
           <SymbolView
             name={hidden ? CommonIcons.eyeSlash : CommonIcons.eye}
-            size={16}
+            size={IconSize.md}
             tintColor={theme.onHero}
           />
         </Pressable>
       </View>
 
-      <View style={styles.balanceBlock}>
-        <Text style={styles.muted}>{t('accountCard.balance')}</Text>
-        <Text style={styles.balance} numberOfLines={1} adjustsFontSizeToFit>
-          {hidden ? '••••••' : formatVND(account.balance)}
-        </Text>
-      </View>
+      {/* Ẩn/hiện số dư: chữ mới hiện dần (150ms) thay vì nhảy, để thấy rõ trạng thái vừa đổi. Lần đầu thì không chạy. */}
+      <LayoutAnimationConfig skipEntering>
+        <View style={styles.balanceBlock}>
+          <Text style={styles.muted}>{t('accountCard.balance')}</Text>
+          <Animated.Text
+            key={hidden ? 'hidden' : 'shown'}
+            entering={FadeIn.duration(150)}
+            style={styles.balance}
+            numberOfLines={1}
+            adjustsFontSizeToFit>
+            {hidden ? '••••••' : formatVND(account.balance)}
+          </Animated.Text>
+        </View>
 
-      <Text style={styles.number} numberOfLines={1}>
-        {displayNumber}
-      </Text>
+        <Animated.Text key={hidden ? 'n-hidden' : 'n-shown'} entering={FadeIn.duration(150)} style={styles.number} numberOfLines={1}>
+          {displayNumber}
+        </Animated.Text>
+      </LayoutAnimationConfig>
 
       {card && (
         <View style={styles.footer}>
@@ -97,6 +118,42 @@ export default function AccountCard({ account, hidden, onToggleHidden }: Props) 
     </LinearGradient>
     </View>
   );
+}
+
+/**
+ * Một vòng sóng của biểu tượng không chạm. Khi chạy, 3 vòng sáng lần lượt từ trong ra ngoài
+ * như thẻ đang sẵn sàng chạm thanh toán; khi dừng thì đứng yên ở độ đậm đầy đủ.
+ */
+function NfcWave({ size, index, running, style }: { size: number; index: number; running: boolean; style: object }) {
+  const { cycle, stagger, restOpacity } = AmbientLoops.nfc;
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    if (!running) {
+      cancelAnimation(opacity);
+      opacity.set(1);
+      return;
+    }
+    const ease = Easing.out(Easing.cubic);
+    opacity.set(restOpacity);
+    opacity.set(
+      withDelay(
+        index * stagger,
+        withRepeat(
+          withSequence(
+            withTiming(1, { duration: cycle * 0.25, easing: ease }),
+            withTiming(restOpacity, { duration: cycle * 0.45, easing: ease }),
+            withTiming(restOpacity, { duration: cycle * 0.3 }),
+          ),
+          -1,
+        ),
+      ),
+    );
+    return () => cancelAnimation(opacity);
+  }, [running, index, opacity, cycle, stagger, restOpacity]);
+
+  const animated = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  return <Animated.View style={[style, { width: size, height: size * 1.6, borderRadius: size }, animated]} />;
 }
 
 function BrandLogo({ brand, styles }: { brand: CardBrand; styles: ReturnType<typeof createStyles> }) {
@@ -175,7 +232,7 @@ function createStyles(theme: ThemeColors) {
       backgroundColor: theme.heroElement,
     },
     pressed: { opacity: 0.6 },
-    balance: { color: theme.onHero, fontSize: 24, lineHeight: 30, fontWeight: '700' },
+    balance: { color: theme.onHero, fontSize: 24, lineHeight: 30, fontWeight: '700', ...MoneyText },
     number: { color: theme.onHero, fontSize: 15, lineHeight: 20, fontFamily: Fonts.mono, letterSpacing: 2.5 },
     caption: { color: theme.onHeroMuted, fontSize: 9, lineHeight: 12, letterSpacing: 1.2, marginBottom: 2 },
     value: { color: theme.onHero, fontSize: 13, lineHeight: 16, fontWeight: '600', letterSpacing: 0.5 },

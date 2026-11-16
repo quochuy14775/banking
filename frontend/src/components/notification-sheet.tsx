@@ -14,7 +14,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CommonIcons, NotificationIcons } from '@/constants/icons';
-import { Fonts, Spacing, type ThemeColors } from '@/constants/theme';
+import { Fonts, MoneyText, Spacing, type ThemeColors, IconSize } from '@/constants/theme';
 import {
   formatBadgeCount,
   formatSignedVND,
@@ -103,7 +103,7 @@ export default function NotificationSheet({ visible, onClose }: Props) {
                 style={({ pressed }) => [styles.markAll, pressed && styles.pressed]}>
                 <SymbolView
                   name={NotificationIcons.markAllRead}
-                  size={15}
+                  size={IconSize.md}
                   tintColor={theme.onPrimarySoft}
                 />
                 <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
@@ -117,7 +117,7 @@ export default function NotificationSheet({ visible, onClose }: Props) {
               style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
               <SymbolView
                 name={CommonIcons.close}
-                size={13}
+                size={IconSize.sm}
                 tintColor={theme.textSecondary}
               />
             </Pressable>
@@ -282,7 +282,7 @@ function BalanceCard({
       </InfoRow>
       <View style={styles.divider} />
       <InfoRow label={balanceLabel} styles={styles}>
-        <Text style={[styles.value, styles.valueStrong]}>{balance}</Text>
+        <Text style={[styles.value, styles.valueStrong, styles.money]}>{balance}</Text>
       </InfoRow>
     </Card>
   );
@@ -335,7 +335,7 @@ function EmptyState({ text, styles, color }: { text: string; styles: Styles; col
     <View style={styles.empty}>
       <SymbolView
         name={NotificationIcons.empty}
-        size={32}
+        size={IconSize.hero}
         tintColor={color}
       />
       <Text style={styles.emptyText}>{text}</Text>
@@ -444,7 +444,7 @@ function createStyles(theme: ThemeColors) {
     cardHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
     time: { fontSize: 12, lineHeight: 16, color: theme.textMuted },
     dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: theme.notify },
-    amount: { fontSize: 20, lineHeight: 26, fontWeight: '700' },
+    amount: { fontSize: 20, lineHeight: 26, fontWeight: '700', ...MoneyText },
     amountIn: { color: theme.success },
     amountOut: { color: theme.danger },
     kv: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.three, marginTop: 6 },
@@ -454,6 +454,7 @@ function createStyles(theme: ThemeColors) {
     valueStrong: { fontWeight: '600' },
     valueMeta: { fontSize: 12, lineHeight: 16, color: theme.textMuted, textAlign: 'right' },
     mono: { fontFamily: Fonts.mono, letterSpacing: 0.5 },
+    money: MoneyText,
     divider: {
       height: StyleSheet.hairlineWidth,
       backgroundColor: theme.border,

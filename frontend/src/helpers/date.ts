@@ -15,6 +15,18 @@ export function formatTime(iso: string): string {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/** `HH:mm · dd/MM/yyyy` */
+export function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  return `${formatTime(iso)} · ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+/** `dd/MM HH:mm` */
+export function formatShortDateTime(iso: string): string {
+  const d = new Date(iso);
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${formatTime(iso)}`;
+}
+
 export interface DayLabels {
   today: string;
   yesterday: string;

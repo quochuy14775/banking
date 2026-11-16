@@ -1,13 +1,16 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
-import type { LoginRequest, LoginResponse, User } from '@/models';
+import type { FaceIdLoginRequest, LoginRequest, LoginResponse, User } from '@/models';
 import * as authService from '@/services/auth.service';
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (req: LoginRequest) => Promise<LoginResponse>;
+  loginWithFaceId: (req: FaceIdLoginRequest) => Promise<LoginResponse>;
   logout: () => Promise<void>;
+  /** Cập nhật một phần hồ sơ người dùng đang đăng nhập (vd sau khi xác thực eKYC). */
+  updateUser: (patch: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -16,10 +19,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function login(req: LoginRequest): Promise<LoginResponse> {
+  async function signIn(request: () => Promise<LoginResponse>): Promise<LoginResponse> {
     setLoading(true);
     try {
-      const res = await authService.login(req);
+      const res = await request();
       if (res.success && res.user) setUser(res.user);
       return res;
     } finally {
@@ -27,13 +30,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const login = (req: LoginRequest) => signIn(() => authService.login(req));
+  const loginWithFaceId = (req: FaceIdLoginRequest) => signIn(() => authService.loginWithFaceId(req));
+
+  const updateUser = (patch: Partial<User>) => setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+
   async function logout(): Promise<void> {
     await authService.logout();
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, loginWithFaceId, logout, updateUser }}>{children}</AuthContext.Provider>
   );
 }
 

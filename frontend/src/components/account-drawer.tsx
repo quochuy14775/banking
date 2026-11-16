@@ -28,8 +28,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import UserAvatar from '@/components/user-avatar';
-import { CommonIcons, ProfileIcons, SettingsIcons, type IconName } from '@/constants/icons';
-import { Colors, Spacing, type ThemeColors } from '@/constants/theme';
+import { CommonIcons, KycIcons, ProfileIcons, SettingsIcons, type IconName } from '@/constants/icons';
+import { Colors, Spacing, type ThemeColors, IconSize } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useConfirmLogout } from '@/hooks/use-confirm-logout';
 import { useTheme } from '@/hooks/use-theme';
@@ -37,8 +37,8 @@ import { THEME_FADE_DURATION, THEME_FADE_EASING, useThemeTransition } from '@/ho
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useI18n, type TranslationKey } from '@/i18n';
 import { useAuth } from '@/lib/authStore';
-import { mockUser } from '@/lib/mockData';
 import { useSettings } from '@/lib/settingsStore';
+import { useSmartOtp } from '@/lib/smartOtpStore';
 import type { AppLanguage, ThemePreference } from '@/models';
 
 const MAX_WIDTH = 360;
@@ -68,9 +68,11 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onOpenProfile: () => void;
+  onOpenKyc: () => void;
+  onOpenSmartOtp: () => void;
 }
 
-export default function AccountDrawer({ visible, onClose, onOpenProfile }: Props) {
+export default function AccountDrawer({ visible, onClose, onOpenProfile, onOpenKyc, onOpenSmartOtp }: Props) {
   const theme = useTheme();
   const styles = useThemedStyles(createStyles);
   const { t } = useI18n();
@@ -79,9 +81,9 @@ export default function AccountDrawer({ visible, onClose, onOpenProfile }: Props
   const panelWidth = Math.min(MAX_WIDTH, width * WIDTH_RATIO);
   const { user } = useAuth();
   const { settings, updateSettings } = useSettings();
+  const { status: smartOtpStatus } = useSmartOtp();
   const themeTransition = useThemeTransition(visible);
   const confirmLogout = useConfirmLogout(onClose);
-  const profile = user ?? mockUser;
 
   const [rendered, setRendered] = useState(visible);
   const progress = useSharedValue(0);
@@ -114,6 +116,9 @@ export default function AccountDrawer({ visible, onClose, onOpenProfile }: Props
   const darkBackgroundStyle = useAnimatedStyle(() => ({ opacity: darkness.get() }));
 
   const comingSoon = (title: string) => Alert.alert(title, t('common.comingSoon'));
+
+  if (!user) return null;
+  const profile = user;
 
   return (
     <Modal
@@ -167,7 +172,7 @@ export default function AccountDrawer({ visible, onClose, onOpenProfile }: Props
               accessibilityRole="button"
               accessibilityLabel={t('common.close')}
               style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
-              <SymbolView name={CommonIcons.close} size={13} tintColor={theme.drawerText} />
+              <SymbolView name={CommonIcons.close} size={IconSize.sm} tintColor={theme.drawerText} />
             </Pressable>
 
             <View style={styles.identity}>
@@ -197,13 +202,33 @@ export default function AccountDrawer({ visible, onClose, onOpenProfile }: Props
             </View>
 
             <View style={styles.glass}>
+              <Row icon={KycIcons.idCard} label={t('drawer.ekyc')} onPress={onOpenKyc} styles={styles} theme={theme}>
+                {profile.kycVerified ? (
+                  <Text style={styles.positive}>{t('drawer.ekycVerified')}</Text>
+                ) : (
+                  <>
+                    <Text style={styles.value}>{t('drawer.ekycPending')}</Text>
+                    <SymbolView name={CommonIcons.chevronRight} size={IconSize.sm} tintColor={theme.drawerTextMuted} />
+                  </>
+                )}
+              </Row>
               <Row
                 icon={SettingsIcons.smartOtp}
                 label={t('drawer.smartOtp')}
-                onPress={() => comingSoon(t('drawer.smartOtp'))}
+                onPress={onOpenSmartOtp}
                 styles={styles}
-                theme={theme}>
-                <Text style={styles.positive}>{t('drawer.enabled')}</Text>
+                theme={theme}
+                divider>
+                {smartOtpStatus === 'active' ? (
+                  <Text style={styles.positive}>{t('drawer.enabled')}</Text>
+                ) : (
+                  smartOtpStatus === 'inactive' && (
+                    <>
+                      <Text style={styles.value}>{t('drawer.notActivated')}</Text>
+                      <SymbolView name={CommonIcons.chevronRight} size={IconSize.sm} tintColor={theme.drawerTextMuted} />
+                    </>
+                  )
+                )}
               </Row>
               <Row
                 icon={SettingsIcons.devices}
@@ -231,7 +256,7 @@ export default function AccountDrawer({ visible, onClose, onOpenProfile }: Props
                 styles={styles}
                 theme={theme}
                 divider>
-                <SymbolView name={CommonIcons.chevronRight} size={13} tintColor={theme.drawerTextMuted} />
+                <SymbolView name={CommonIcons.chevronRight} size={IconSize.sm} tintColor={theme.drawerTextMuted} />
               </Row>
             </View>
 
@@ -268,7 +293,7 @@ export default function AccountDrawer({ visible, onClose, onOpenProfile }: Props
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.logout}>
-                <SymbolView name={ProfileIcons.logout} size={17} tintColor={theme.drawerText} />
+                <SymbolView name={ProfileIcons.logout} size={IconSize.lg} tintColor={theme.drawerText} />
                 <Text style={styles.logoutText}>{t('common.logout')}</Text>
               </LinearGradient>
             </Pressable>
@@ -297,7 +322,7 @@ function Chip({ icon, label, onPress, styles, theme }: ChipProps) {
       onPress={onPress}
       accessibilityRole="button"
       style={({ pressed }) => [styles.chip, pressed && styles.pressed]}>
-      <SymbolView name={icon} size={14} tintColor={theme.drawerText} />
+      <SymbolView name={icon} size={IconSize.sm} tintColor={theme.drawerText} />
       <Text style={styles.chipText}>{label}</Text>
     </Pressable>
   );
@@ -317,7 +342,7 @@ function Row({ icon, label, onPress, divider, styles, theme, children }: RowProp
   const content = (
     <>
       <View style={styles.rowIcon}>
-        <SymbolView name={icon} size={17} tintColor={theme.drawerText} />
+        <SymbolView name={icon} size={IconSize.lg} tintColor={theme.drawerText} />
       </View>
       <Text style={styles.rowLabel}>{label}</Text>
       {children}
@@ -407,7 +432,7 @@ function SegmentLayer<T extends string>({ option, index, position, active, style
   return (
     <Animated.View style={[styles.segmentLayer, layerStyle]} pointerEvents="none">
       {option.icon ? (
-        <SymbolView name={option.icon} size={15} tintColor={color} />
+        <SymbolView name={option.icon} size={IconSize.md} tintColor={color} />
       ) : (
         <Text style={[styles.segmentText, { color }]}>{option.label}</Text>
       )}

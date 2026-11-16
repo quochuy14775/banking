@@ -14,7 +14,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { CommonIcons, QuickActionIcons } from '@/constants/icons';
-import { Spacing, type ThemeColors } from '@/constants/theme';
+import { Spacing, type ThemeColors, IconSize } from '@/constants/theme';
 import { radialPositions, type Point } from '@/helpers';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -120,7 +120,7 @@ export default function QuickActionMenu({
           accessibilityRole="button"
           accessibilityLabel={t('quickActions.closeMenu')}>
           <Animated.View style={plusStyle}>
-            <SymbolView name={CommonIcons.plus} size={28} tintColor={theme.onPrimary} />
+            <SymbolView name={CommonIcons.plus} size={IconSize.xxxl} tintColor={theme.onPrimary} />
           </Animated.View>
         </Pressable>
       </View>

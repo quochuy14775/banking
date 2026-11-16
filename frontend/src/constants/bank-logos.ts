@@ -1,0 +1,33 @@
+// Biểu tượng vuông đóng gói sẵn (icon app chính thức của từng ngân hàng trên App Store, 256px).
+// Ưu tiên hơn `Bank.logo` (URL từ API); mã không có ở đây thì dùng URL hoặc ô mã thay thế.
+// `require` ảnh trong Metro trả về id dạng số.
+export const BankLogos: Record<string, number | undefined> = {
+  VCB: require('@/assets/banks/vcb.png'),
+  BIDV: require('@/assets/banks/bidv.png'),
+  ICB: require('@/assets/banks/icb.png'),
+  VBA: require('@/assets/banks/vba.png'),
+  TCB: require('@/assets/banks/tcb.png'),
+  MB: require('@/assets/banks/mb.png'),
+  ACB: require('@/assets/banks/acb.png'),
+  VPB: require('@/assets/banks/vpb.png'),
+  TPB: require('@/assets/banks/tpb.png'),
+  STB: require('@/assets/banks/stb.png'),
+  HDB: require('@/assets/banks/hdb.png'),
+  VIB: require('@/assets/banks/vib.png'),
+  SHB: require('@/assets/banks/shb.png'),
+  EIB: require('@/assets/banks/eib.png'),
+  MSB: require('@/assets/banks/msb.png'),
+  OCB: require('@/assets/banks/ocb.png'),
+  SEAB: require('@/assets/banks/seab.png'),
+  LPB: require('@/assets/banks/lpb.png'),
+  SCB: require('@/assets/banks/scb.png'),
+  NAB: require('@/assets/banks/nab.png'),
+  ABB: require('@/assets/banks/abb.png'),
+  BAB: require('@/assets/banks/bab.png'),
+  PGB: require('@/assets/banks/pgb.png'),
+  KLB: require('@/assets/banks/klb.png'),
+  VAB: require('@/assets/banks/vab.png'),
+  NCB: require('@/assets/banks/ncb.png'),
+  BVB: require('@/assets/banks/bvb.png'),
+  SGICB: require('@/assets/banks/sgicb.png'),
+};

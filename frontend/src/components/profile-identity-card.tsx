@@ -1,18 +1,20 @@
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import UserAvatar from '@/components/user-avatar';
-import { ProfileIcons, type IconName } from '@/constants/icons';
-import { Fonts, Spacing, type ThemeColors } from '@/constants/theme';
+import { CommonIcons, ProfileIcons, type IconName } from '@/constants/icons';
+import { Fonts, Spacing, type ThemeColors, IconSize } from '@/constants/theme';
 import { buildReceiveQrPayload, toCardName } from '@/helpers';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
 import type { User } from '@/models';
+import { getAppBank } from '@/services/bank.service';
 
 const QR_SIZE = 168;
 const COPIED_RESET_MS = 1500;
@@ -64,10 +66,21 @@ export default function ProfileIdentityCard({ user }: Props) {
             {t('common.appName')}
             {user.memberSince ? ` · ${t('profile.memberSince', { year: user.memberSince })}` : ''}
           </Text>
+          {/* Chưa xác thực: nút nằm dưới tên để tên không bị cắt; xác thực xong thì thành huy hiệu eKYC bên phải. */}
+          {!user.kycVerified && (
+            <Pressable
+              onPress={() => router.navigate({ pathname: '/kyc', params: { from: 'profile' } })}
+              hitSlop={6}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.kycButton, pressed && styles.pressed]}>
+              <Text style={styles.kycButtonText}>{t('profile.ekycCta')}</Text>
+              <SymbolView name={CommonIcons.chevronRight} size={IconSize.xs} tintColor={theme.hero} />
+            </Pressable>
+          )}
         </View>
         {user.kycVerified && (
           <View style={styles.badge}>
-            <SymbolView name={ProfileIcons.verified} size={13} tintColor={theme.onHero} />
+            <SymbolView name={ProfileIcons.verified} size={IconSize.sm} tintColor={theme.onHero} />
             <Text style={styles.badgeText}>eKYC</Text>
           </View>
         )}
@@ -76,7 +89,7 @@ export default function ProfileIdentityCard({ user }: Props) {
       <View style={styles.qrArea}>
         <View style={styles.qrFrame} accessible accessibilityLabel={t('profile.qrLabel')}>
           <QRCode
-            value={buildReceiveQrPayload(user)}
+            value={buildReceiveQrPayload(user, getAppBank().bin)}
             size={QR_SIZE}
             color={theme.text}
             backgroundColor={theme.backgroundElement}
@@ -91,7 +104,7 @@ export default function ProfileIdentityCard({ user }: Props) {
           accessibilityLabel={t('profile.copyAccount', { account: user.accountNumber })}
           style={({ pressed }) => [styles.accountRow, pressed && styles.pressed]}>
           <Text style={styles.account}>{user.accountNumber}</Text>
-          <SymbolView name={ProfileIcons.copy} size={16} tintColor={theme.primary} />
+          <SymbolView name={ProfileIcons.copy} size={IconSize.md} tintColor={theme.primary} />
         </Pressable>
         <Text style={[styles.copied, !copied && styles.hidden]}>{t('profile.copied')}</Text>
       </View>
@@ -130,7 +143,7 @@ function ActionButton({ icon, label, onPress, styles, theme }: ActionButtonProps
       onPress={onPress}
       accessibilityRole="button"
       style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-      <SymbolView name={icon} size={16} tintColor={theme.onPrimarySoft} />
+      <SymbolView name={icon} size={IconSize.md} tintColor={theme.onPrimarySoft} />
       <Text style={styles.actionText}>{label}</Text>
     </Pressable>
   );
@@ -159,6 +172,19 @@ function createStyles(theme: ThemeColors) {
       backgroundColor: theme.heroElement,
     },
     badgeText: { fontSize: 12, lineHeight: 16, fontWeight: '600', color: theme.onHero },
+    kycButton: {
+      alignSelf: 'flex-start',
+      marginTop: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      borderRadius: 14,
+      paddingLeft: 12,
+      paddingRight: 9,
+      paddingVertical: 6,
+      backgroundColor: theme.onHero,
+    },
+    kycButtonText: { fontSize: 13, lineHeight: 17, fontWeight: '700', color: theme.hero },
     qrArea: { alignItems: 'center', paddingTop: Spacing.four, paddingBottom: Spacing.two },
     qrFrame: {
       padding: 12,

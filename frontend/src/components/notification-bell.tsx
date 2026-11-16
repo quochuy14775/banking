@@ -16,6 +16,7 @@ import Animated, {
 
 import { NotificationIcons } from '@/constants/icons';
 import type { ThemeColors } from '@/constants/theme';
+import { IconSize } from '@/constants/theme';
 import { formatBadgeCount } from '@/helpers';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -97,7 +98,7 @@ export default function NotificationBell({ count, onPress }: Props) {
       <Animated.View style={[styles.bell, bellStyle]}>
         <SymbolView
           name={NotificationIcons.bell}
-          size={22}
+          size={IconSize.xxl}
           tintColor={theme.text}
         />
       </Animated.View>

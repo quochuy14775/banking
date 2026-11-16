@@ -8,6 +8,7 @@ import LoginScreen from '@/components/login-screen';
 import { AuthProvider, useAuth } from '@/lib/authStore';
 import { NotificationProvider } from '@/lib/notificationStore';
 import { SettingsProvider } from '@/lib/settingsStore';
+import { SmartOtpProvider } from '@/lib/smartOtpStore';
 
 SplashScreen.preventAutoHideAsync();
 // Sáng tạm thời cho tới khi SettingsProvider đọc xong lựa chọn đã lưu; web không có setColorScheme.
@@ -24,10 +25,12 @@ export default function TabLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SettingsProvider>
         <AuthProvider>
-          <NotificationProvider>
-            <AnimatedSplashOverlay />
-            <RootContent />
-          </NotificationProvider>
+          <SmartOtpProvider>
+            <NotificationProvider>
+              <AnimatedSplashOverlay />
+              <RootContent />
+            </NotificationProvider>
+          </SmartOtpProvider>
         </AuthProvider>
       </SettingsProvider>
     </ThemeProvider>

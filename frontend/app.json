@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "MobileBanking",
+    "name": "VietBank",
     "slug": "MobileBanking",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +12,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0F4D3C",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -28,11 +28,32 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#0F4D3C",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 120
         }
-      ]
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "VietBank dùng camera để quét mã QR chuyển tiền, quét mã QR trên CCCD và chụp khuôn mặt khi xác thực eKYC.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "VietBank dùng Face ID để bạn đăng nhập nhanh và an toàn."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "VietBank cần truy cập ảnh để đọc mã QR chuyển tiền từ thư viện."
+        }
+      ],
+      "expo-secure-store",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,
