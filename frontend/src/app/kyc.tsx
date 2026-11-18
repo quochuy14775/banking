@@ -27,14 +27,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import PrimaryButton from '@/components/primary-button';
+import PrimaryButton from '@/shared/components/primary-button';
 import { KycIcons, LoginIcons, QrIcons, TransferIcons, type IconName } from '@/constants/icons';
 import { Fonts, Radius, Spacing, Typography, type ThemeColors, IconSize } from '@/constants/theme';
 import { formatFullDate, maskIdNumber, parseCccdQr } from '@/helpers';
-import { useTheme } from '@/hooks/use-theme';
-import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useTheme } from '@/shared/hooks/use-theme';
+import { useThemedStyles } from '@/shared/hooks/use-themed-styles';
 import { useI18n, type TranslationKey } from '@/i18n';
-import { useAuth } from '@/lib/authStore';
+import { useAuth } from '@/features/auth/store/authStore';
 import type { CccdInfo } from '@/models';
 import { getDemoCccdQrPayload, getDemoSelfie, submitKyc } from '@/services/kyc.service';
 

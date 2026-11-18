@@ -1,4 +1,4 @@
-import { APP_BANK, mockBanks } from '@/lib/mockData';
+import { APP_BANK, mockBanks } from '@/shared/lib/mockData';
 import type { Bank, GetBanksResponse } from '@/models';
 
 export async function getBanks(): Promise<GetBanksResponse> {

@@ -1,4 +1,4 @@
-import { MOCK_MONTHLY_BUDGET, mockSavingsGoals, mockSpendingMonths } from '@/lib/mockData';
+import { MOCK_MONTHLY_BUDGET, mockSavingsGoals, mockSpendingMonths } from '@/shared/lib/mockData';
 import type {
   ContributeGoalRequest,
   ContributeGoalResponse,

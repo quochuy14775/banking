@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { QrIcons, TransferIcons, type IconName } from '@/constants/icons';
 import { Radius, Spacing, Typography, IconSize } from '@/constants/theme';
 import { parseVietQr } from '@/helpers';
-import { useTheme } from '@/hooks/use-theme';
+import { useTheme } from '@/shared/hooks/use-theme';
 import { useI18n } from '@/i18n';
 import { getBankByBin } from '@/services/bank.service';
 import { getDemoQrPayload } from '@/services/transfer.service';

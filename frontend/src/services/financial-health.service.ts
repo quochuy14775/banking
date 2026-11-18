@@ -1,4 +1,4 @@
-import { mockFinancialHealth } from '@/lib/mockData';
+import { mockFinancialHealth } from '@/shared/lib/mockData';
 import type { GetFinancialHealthRequest, GetFinancialHealthResponse } from '@/models';
 
 export async function getFinancialHealth(req: GetFinancialHealthRequest): Promise<GetFinancialHealthResponse> {

@@ -1,6 +1,6 @@
 import { toCardName } from '@/helpers';
 import { buildVietQr } from '@/helpers/vietqr';
-import { APP_BANK, mockAccountDirectory, mockAccounts, mockContacts, mockUser } from '@/lib/mockData';
+import { APP_BANK, mockAccountDirectory, mockAccounts, mockContacts, mockUser } from '@/shared/lib/mockData';
 import type {
   AuthMethod,
   CreateTransferRequest,

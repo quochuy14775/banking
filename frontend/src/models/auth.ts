@@ -12,10 +12,33 @@ export interface FaceIdLoginRequest {
   username: string;
 }
 
+/** Nhân viên ngân hàng (vai trò ADMIN của auth-service): dùng màn duyệt hồ sơ đăng ký thay cho các tab của khách. */
+export interface StaffUser {
+  id: string;
+  username: string;
+}
+
+/**
+ * Cặp token auth-service cấp khi đăng nhập thật. Chỉ giữ trong bộ nhớ (tắt app hoặc tải lại trang là phải đăng nhập
+ * lại), không ghi xuống máy và không in ra log.
+ */
+export interface SessionTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+/** Lý do đăng nhập thất bại; màn hình chọn câu thông báo theo ngôn ngữ đang dùng. */
+export type LoginError = 'invalidCredentials' | 'locked' | 'disabled' | 'unsupportedRole' | 'network' | 'unknown';
+
 export interface LoginResponse {
   success: boolean;
+  /** Khách hàng đăng nhập: vào các tab của khách. */
   user?: User;
-  token?: string;
+  /** Nhân viên đăng nhập: vào màn duyệt hồ sơ. */
+  staff?: StaffUser;
+  /** Có khi đăng nhập bằng auth-service thật; chế độ mock không có token. */
+  tokens?: SessionTokens;
+  error?: LoginError;
   message?: string;
 }
 
@@ -30,7 +53,7 @@ export interface RegisterRequest {
   accessCode: string;
 }
 
-/** Tài khoản đăng nhập vừa tạo, đúng như auth-service trả về. */
+/** Tài khoản đăng nhập, đúng như auth-service trả về (khi đăng ký, và ở GET /api/auth/me). */
 export interface RegisteredUser {
   id: string;
   username: string;

@@ -1,5 +1,5 @@
 import { parseISODate, toCardName } from '@/helpers';
-import { mockAccounts, mockTransactionSeeds, mockUser, type TransactionSeed } from '@/lib/mockData';
+import { mockAccounts, mockTransactionSeeds, mockUser, type TransactionSeed } from '@/shared/lib/mockData';
 import type {
   Account,
   DateRange,

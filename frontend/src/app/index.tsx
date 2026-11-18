@@ -5,28 +5,28 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import Animated, { Easing, FadeOut, LinearTransition, withDelay, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import AccountCard from '@/components/account-card';
-import AccountDrawer from '@/components/account-drawer';
-import AppLogo from '@/components/app-logo';
-import BillPaySheet, { type BillSheetMode } from '@/components/bill-pay-sheet';
-import FeatureSearchModal from '@/components/feature-search-modal';
-import FinancialScoreCard from '@/components/financial-score-card';
-import InsightCard from '@/components/insight-card';
-import NotificationBell from '@/components/notification-bell';
-import NotificationSheet from '@/components/notification-sheet';
-import SavingsGoalsCard from '@/components/savings-goals-card';
-import SpendingCard from '@/components/spending-card';
-import UpcomingBillsCard from '@/components/upcoming-bills-card';
-import UserAvatar from '@/components/user-avatar';
+import AccountCard from '@/features/home/components/account-card';
+import AccountDrawer from '@/features/home/components/account-drawer';
+import AppLogo from '@/shared/components/app-logo';
+import BillPaySheet, { type BillSheetMode } from '@/features/bills/components/bill-pay-sheet';
+import FeatureSearchModal from '@/features/home/components/feature-search-modal';
+import FinancialScoreCard from '@/features/home/components/financial-score-card';
+import InsightCard from '@/features/home/components/insight-card';
+import NotificationBell from '@/features/notifications/components/notification-bell';
+import NotificationSheet from '@/features/notifications/components/notification-sheet';
+import SavingsGoalsCard from '@/features/home/components/savings-goals-card';
+import SpendingCard from '@/features/home/components/spending-card';
+import UpcomingBillsCard from '@/features/home/components/upcoming-bills-card';
+import UserAvatar from '@/shared/components/user-avatar';
 import { SearchIcons } from '@/constants/icons';
 import { Spacing, IconSize } from '@/constants/theme';
-import { useAccounts } from '@/hooks/use-accounts';
-import { useFinancialHealth } from '@/hooks/use-financial-health';
-import { useInsights, useSavingsGoals, useSpendingSummary, useUpcomingBills } from '@/hooks/use-home-widgets';
-import { useTheme } from '@/hooks/use-theme';
+import { useAccounts } from '@/shared/hooks/use-accounts';
+import { useFinancialHealth } from '@/features/home/hooks/use-financial-health';
+import { useInsights, useSavingsGoals, useSpendingSummary, useUpcomingBills } from '@/features/home/hooks/use-home-widgets';
+import { useTheme } from '@/shared/hooks/use-theme';
 import { useI18n } from '@/i18n';
-import { useAuth } from '@/lib/authStore';
-import { useNotifications } from '@/lib/notificationStore';
+import { useAuth } from '@/features/auth/store/authStore';
+import { useNotifications } from '@/features/notifications/store/notificationStore';
 
 const TAB_BAR_CLEARANCE = 120;
 

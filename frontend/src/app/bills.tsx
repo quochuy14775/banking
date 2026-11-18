@@ -18,17 +18,17 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import BillCategoryIcon from '@/components/bill-category-icon';
-import BillPaySheet, { type BillPayItem, type BillSheetMode } from '@/components/bill-pay-sheet';
-import { BillCategoryColors, type BillTileCategory } from '@/constants/bill-colors';
+import BillCategoryIcon from '@/features/bills/components/bill-category-icon';
+import BillPaySheet, { type BillPayItem, type BillSheetMode } from '@/features/bills/components/bill-pay-sheet';
+import { BillCategoryColors, type BillTileCategory } from '@/features/bills/bill-colors';
 import { BillIcons, TransferIcons } from '@/constants/icons';
 import { MoneyText, Radius, Spacing, Typography, type ThemeColors, IconSize } from '@/constants/theme';
 import { daysUntil, formatDayMonth, formatVND, parseISODate, upcomingDays, weekdayKey } from '@/helpers';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useTheme } from '@/hooks/use-theme';
-import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useColorScheme } from '@/shared/hooks/use-color-scheme';
+import { useTheme } from '@/shared/hooks/use-theme';
+import { useThemedStyles } from '@/shared/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
-import { useAuth } from '@/lib/authStore';
+import { useAuth } from '@/features/auth/store/authStore';
 import type { BillHistoryItem, BillProvider, SavedBill } from '@/models';
 import { getBillHistory, getBillProviders, getSavedBills } from '@/services/bill.service';
 

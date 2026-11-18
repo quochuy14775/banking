@@ -31,19 +31,19 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import BankPicker from '@/components/bank-picker';
-import OtpInput from '@/components/otp-input';
-import PrimaryButton from '@/components/primary-button';
-import TransferSteps, { TRANSFER_STEPS, type TransferStep } from '@/components/transfer-steps';
+import BankPicker from '@/features/transfer/components/bank-picker';
+import OtpInput from '@/shared/components/otp-input';
+import PrimaryButton from '@/shared/components/primary-button';
+import TransferSteps, { TRANSFER_STEPS, type TransferStep } from '@/features/transfer/components/transfer-steps';
 import { SmartOtpIcons, TransferIcons } from '@/constants/icons';
 import { Fonts, MoneyText, Radius, Spacing, Typography, type ThemeColors, IconSize } from '@/constants/theme';
 import { formatNumberVND, formatVND } from '@/helpers';
-import { refreshAccounts, useAccounts } from '@/hooks/use-accounts';
-import { useSmartOtpCode } from '@/hooks/use-smart-otp-code';
-import { useTheme } from '@/hooks/use-theme';
-import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { refreshAccounts, useAccounts } from '@/shared/hooks/use-accounts';
+import { useSmartOtpCode } from '@/features/smart-otp/hooks/use-smart-otp-code';
+import { useTheme } from '@/shared/hooks/use-theme';
+import { useThemedStyles } from '@/shared/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
-import { useAuth } from '@/lib/authStore';
+import { useAuth } from '@/features/auth/store/authStore';
 import type { AuthMethod, Bank, Contact } from '@/models';
 import { getBankByCode } from '@/services/bank.service';
 import {

@@ -1,5 +1,5 @@
 import { CUSTOMER_API_URL, USE_MOCK_CUSTOMER } from '@/constants/api';
-import { apiRequest, type ApiProblem } from '@/lib/apiClient';
+import { apiRequest, type ApiProblem } from '@/shared/lib/apiClient';
 import type {
   ApplicationStatusResponse,
   ApplicationStatusView,
@@ -13,7 +13,8 @@ import type {
 // Đăng ký mở tài khoản với customer-service (API công khai, chưa cần đăng nhập):
 // 1. POST /api/onboarding/applications: gửi thông tin CCCD (đọc từ mã QR) + 3 ảnh; nhận mã hồ sơ và mã tra cứu.
 // 2. GET /api/onboarding/applications/{id} (header X-Access-Code): xem hồ sơ chờ duyệt, bị từ chối hay đã duyệt.
-// Nhân viên duyệt hồ sơ ở API quản trị (bản demo dùng Postman). Đã duyệt thì tạo tài khoản đăng nhập ở auth-service.
+// Nhân viên duyệt hồ sơ ở màn quản trị của app (đăng nhập tài khoản ADMIN; xem admin-review.service). Đã duyệt thì
+// tạo tài khoản đăng nhập ở auth-service.
 // Có địa chỉ customer-service (EXPO_PUBLIC_CUSTOMER_API_URL) thì gọi backend thật, để trống thì dùng mock.
 
 // Gửi 3 ảnh nên lâu hơn các API khác.

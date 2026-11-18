@@ -1,4 +1,4 @@
-import { mockQuickActions } from '@/lib/mockData';
+import { mockQuickActions } from '@/shared/lib/mockData';
 import type { GetQuickActionsRequest, GetQuickActionsResponse } from '@/models';
 
 export async function getQuickActions(req: GetQuickActionsRequest): Promise<GetQuickActionsResponse> {

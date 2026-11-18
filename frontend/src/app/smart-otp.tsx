@@ -28,16 +28,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import OtpInput from '@/components/otp-input';
-import PrimaryButton from '@/components/primary-button';
+import OtpInput from '@/shared/components/otp-input';
+import PrimaryButton from '@/shared/components/primary-button';
 import { SmartOtpIcons, TransferIcons, type IconName } from '@/constants/icons';
 import { Fonts, Radius, Spacing, Typography, type ThemeColors, IconSize } from '@/constants/theme';
 import { dayKey, formatDate, formatTime } from '@/helpers';
 import { TOTP_PERIOD_SECONDS, totpSecondsLeft, totpStep } from '@/helpers/totp';
-import { useTheme } from '@/hooks/use-theme';
-import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useTheme } from '@/shared/hooks/use-theme';
+import { useThemedStyles } from '@/shared/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
-import { pinFailureMessage, useSmartOtp, type PinFailure } from '@/lib/smartOtpStore';
+import { pinFailureMessage, useSmartOtp, type PinFailure } from '@/features/smart-otp/store/smartOtpStore';
 
 const RESEND_SECONDS = 60;
 const STEP_IN_MS = 280;

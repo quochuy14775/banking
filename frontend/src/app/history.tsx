@@ -15,16 +15,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import TransactionDetailSheet from '@/components/transaction-detail-sheet';
-import TransactionRow from '@/components/transaction-row';
+import TransactionDetailSheet from '@/features/history/components/transaction-detail-sheet';
+import TransactionRow from '@/features/history/components/transaction-row';
 import { CommonIcons, HistoryIcons, SearchIcons, TransferIcons } from '@/constants/icons';
 import { MoneyText, Radius, Spacing, Typography, type ThemeColors, IconSize } from '@/constants/theme';
 import { formatSignedVND, groupByDay, maskAccountNumber, recentDays, removeDiacritics } from '@/helpers';
-import { useAccounts } from '@/hooks/use-accounts';
-import { useTheme } from '@/hooks/use-theme';
-import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useAccounts } from '@/shared/hooks/use-accounts';
+import { useTheme } from '@/shared/hooks/use-theme';
+import { useThemedStyles } from '@/shared/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
-import { useAuth } from '@/lib/authStore';
+import { useAuth } from '@/features/auth/store/authStore';
 import type { Transaction, TransactionType } from '@/models';
 import { getTransactions } from '@/services/transaction.service';
 

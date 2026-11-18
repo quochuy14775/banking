@@ -2,15 +2,15 @@ import { SymbolView } from 'expo-symbols';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import ProfileIdentityCard from '@/components/profile-identity-card';
-import ProfileInfoSection from '@/components/profile-info-section';
+import ProfileIdentityCard from '@/features/profile/components/profile-identity-card';
+import ProfileInfoSection from '@/features/profile/components/profile-info-section';
 import { ProfileIcons } from '@/constants/icons';
 import { Spacing, Typography, type ThemeColors, IconSize } from '@/constants/theme';
-import { useConfirmLogout } from '@/hooks/use-confirm-logout';
-import { useTheme } from '@/hooks/use-theme';
-import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useConfirmLogout } from '@/features/auth/hooks/use-confirm-logout';
+import { useTheme } from '@/shared/hooks/use-theme';
+import { useThemedStyles } from '@/shared/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
-import { useAuth } from '@/lib/authStore';
+import { useAuth } from '@/features/auth/store/authStore';
 
 export default function ProfileScreen() {
   const theme = useTheme();

@@ -2,10 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { AUTH_API_URL, USE_MOCK_AUTH } from '@/constants/api';
 import { normalizeUsername } from '@/helpers';
-import { apiRequest, type ApiProblem } from '@/lib/apiClient';
-import { mockUser } from '@/lib/mockData';
+import { apiRequest, type ApiProblem } from '@/shared/lib/apiClient';
+import { mockUser } from '@/shared/lib/mockData';
 import type {
   FaceIdLoginRequest,
+  LoginError,
   LoginRequest,
   LoginResponse,
   RegisterField,
@@ -13,14 +14,24 @@ import type {
   RegisterRequest,
   RegisterResponse,
   RememberedUser,
+  SessionTokens,
   User,
 } from '@/models';
 import { withKycProfile } from '@/services/kyc.service';
 
 const MOCK_DELAY_MS = 600;
-// Nhớ người dùng đã đăng nhập trên máy (chỉ thông tin hiển thị, không lưu mật khẩu) để lần sau
-// chỉ cần nhập mật khẩu hoặc quét Face ID. Khi có BE, token phiên nên nằm trong expo-secure-store.
+// Nhớ khách đã đăng nhập trên máy (chỉ thông tin hiển thị, không lưu mật khẩu hay token) để lần sau
+// chỉ cần nhập mật khẩu. Nhân viên không được nhớ.
 const REMEMBERED_USER_KEY = 'vietbank.rememberedUser.v1';
+
+/** Cặp token auth-service trả khi đăng nhập (TokenResponse). */
+interface TokenResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+  refreshToken: string;
+  refreshExpiresIn: number;
+}
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -36,22 +47,90 @@ async function rememberUser(user: User): Promise<void> {
   await AsyncStorage.setItem(REMEMBERED_USER_KEY, JSON.stringify(remembered)).catch(() => {});
 }
 
+/**
+ * Đăng nhập. Có địa chỉ auth-service (EXPO_PUBLIC_AUTH_API_URL) thì gọi backend thật: POST /api/auth/login lấy cặp
+ * token, rồi GET /api/auth/me lấy vai trò. ADMIN là nhân viên (vào màn duyệt hồ sơ), CUSTOMER là khách (vào các tab
+ * của khách). Không có địa chỉ thì dùng mock: nhập gì cũng vào bằng tài khoản khách demo.
+ */
 export async function login(req: LoginRequest): Promise<LoginResponse> {
   const username = req.username.trim();
   if (!username || !req.password) {
     return { success: false, message: 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.' };
   }
+  if (USE_MOCK_AUTH) return loginMock(username);
+
+  const tokenResult = await apiRequest<TokenResponse>(AUTH_API_URL, '/api/auth/login', {
+    method: 'POST',
+    body: { username, password: req.password },
+  });
+  if (!tokenResult.ok) return { success: false, error: toLoginError(tokenResult.problem) };
+  const tokens: SessionTokens = {
+    accessToken: tokenResult.data.accessToken,
+    refreshToken: tokenResult.data.refreshToken,
+  };
+
+  // Vai trò hỏi auth-service thay vì tự giải mã access token: app coi token là chuỗi kín, chỉ gửi kèm khi gọi API.
+  const me = await apiRequest<RegisteredUser>(AUTH_API_URL, '/api/auth/me', { accessToken: tokens.accessToken });
+  if (!me.ok) {
+    void revokeSession(tokens.refreshToken);
+    return { success: false, error: toLoginError(me.problem) };
+  }
+  const roles = me.data.roles ?? [];
+  if (roles.includes('ADMIN')) {
+    return { success: true, staff: { id: me.data.id, username: me.data.username }, tokens };
+  }
+  if (roles.includes('CUSTOMER')) {
+    // Chưa có API hồ sơ khách: thông tin hiển thị, tài khoản, giao dịch vẫn lấy từ dữ liệu mock; tên đăng nhập là thật.
+    const user = withKycProfile({ ...mockUser, username: me.data.username });
+    await rememberUser(user);
+    return { success: true, user, tokens };
+  }
+  void revokeSession(tokens.refreshToken);
+  return { success: false, error: 'unsupportedRole' };
+}
+
+async function loginMock(username: string): Promise<LoginResponse> {
   await delay(MOCK_DELAY_MS);
   const user = withKycProfile({ ...mockUser, username });
   await rememberUser(user);
-  return { success: true, token: 'mock-token', user };
+  return { success: true, user };
 }
 
-// Khi có BE: Face ID mở khoá token/khoá bí mật lưu an toàn trên máy rồi gửi lên server, không gửi tên trần.
+// Đổi lỗi của auth-service thành loại lỗi; màn đăng nhập chọn câu thông báo theo ngôn ngữ đang dùng.
+function toLoginError(problem: ApiProblem): LoginError {
+  if (problem.status === 0) return 'network';
+  switch (problem.code) {
+    // Tên hoặc mật khẩu dài quá giới hạn (VALIDATION_FAILED) cũng báo như sai thông tin, không lộ quy tắc.
+    case 'AUTH_INVALID_CREDENTIALS':
+    case 'VALIDATION_FAILED':
+      return 'invalidCredentials';
+    case 'AUTH_USER_LOCKED':
+      return 'locked';
+    case 'AUTH_USER_DISABLED':
+      return 'disabled';
+    default:
+      return 'unknown';
+  }
+}
+
+/**
+ * Face ID chỉ có ở chế độ mock. Với auth-service thật, Face ID phải mở khoá refresh token lưu an toàn trên máy rồi đổi
+ * lấy token mới; app chưa lưu refresh token nên màn đăng nhập ẩn nút Face ID.
+ */
 export async function loginWithFaceId(req: FaceIdLoginRequest): Promise<LoginResponse> {
+  if (!USE_MOCK_AUTH) return { success: false, error: 'unknown' };
   if (!req.username) return { success: false, message: 'Chưa có tài khoản đăng nhập trên máy này.' };
   await delay(MOCK_DELAY_MS);
-  return { success: true, token: 'mock-token', user: withKycProfile({ ...mockUser, username: req.username }) };
+  return { success: true, user: withKycProfile({ ...mockUser, username: req.username }) };
+}
+
+/**
+ * Thu hồi phiên đăng nhập ở auth-service (POST /api/auth/logout) để refresh token không dùng lại được.
+ * Không chờ kết quả: lỗi mạng ở đây không giữ người dùng lại trong app.
+ */
+export async function revokeSession(refreshToken: string): Promise<void> {
+  if (USE_MOCK_AUTH) return;
+  await apiRequest<void>(AUTH_API_URL, '/api/auth/logout', { method: 'POST', body: { refreshToken } });
 }
 
 /**
@@ -125,9 +204,9 @@ export async function forgetRememberedUser(): Promise<void> {
   await AsyncStorage.removeItem(REMEMBERED_USER_KEY).catch(() => {});
 }
 
-// Chưa đăng xuất (chỉ tắt app) thì vẫn nhớ người dùng: lần sau chỉ cần mật khẩu hoặc Face ID.
-// Chủ động đăng xuất thì quên luôn, lần sau phải nhập lại tài khoản và mật khẩu.
-// Khi có BE: thêm thu hồi refresh token và hết phiên sau một khoảng không dùng.
-export async function logout(): Promise<void> {
+// Chưa đăng xuất (chỉ tắt app) thì vẫn nhớ người dùng: lần sau chỉ cần mật khẩu (hoặc Face ID ở chế độ mock).
+// Chủ động đăng xuất thì quên luôn, lần sau phải nhập lại tài khoản và mật khẩu; có phiên thật thì thu hồi luôn.
+export async function logout(refreshToken?: string): Promise<void> {
+  if (refreshToken) void revokeSession(refreshToken);
   await forgetRememberedUser();
 }

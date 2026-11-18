@@ -1,4 +1,4 @@
-import { mockAccounts } from '@/lib/mockData';
+import { mockAccounts } from '@/shared/lib/mockData';
 import type { GetAccountsRequest, GetAccountsResponse } from '@/models';
 
 export async function getAccounts(req: GetAccountsRequest): Promise<GetAccountsResponse> {

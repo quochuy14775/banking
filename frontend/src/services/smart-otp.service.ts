@@ -1,7 +1,7 @@
 import { getRandomBytesAsync } from 'expo-crypto';
 
 import { bytesToHex, totpAtStep, totpStep } from '@/helpers/totp';
-import { MOCK_OTP } from '@/lib/mockData';
+import { MOCK_OTP } from '@/shared/lib/mockData';
 import type {
   AuthMethod,
   ConfirmSmartOtpActivationRequest,

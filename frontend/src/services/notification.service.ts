@@ -1,4 +1,4 @@
-import { mockNotifications } from '@/lib/mockData';
+import { mockNotifications } from '@/shared/lib/mockData';
 import type {
   GetNotificationsRequest,
   GetNotificationsResponse,

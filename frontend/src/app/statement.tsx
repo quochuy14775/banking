@@ -5,18 +5,18 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import PrimaryButton from '@/components/primary-button';
-import TransactionDetailSheet from '@/components/transaction-detail-sheet';
-import TransactionRow from '@/components/transaction-row';
+import PrimaryButton from '@/shared/components/primary-button';
+import TransactionDetailSheet from '@/features/history/components/transaction-detail-sheet';
+import TransactionRow from '@/features/history/components/transaction-row';
 import { HistoryIcons, TransferIcons } from '@/constants/icons';
 import { MoneyText, Radius, Spacing, Typography, type ThemeColors, IconSize } from '@/constants/theme';
 import { formatFullDate, formatSignedVND, formatVND, maskAccountNumber, monthPeriod } from '@/helpers';
-import { useAccounts } from '@/hooks/use-accounts';
-import { useTheme } from '@/hooks/use-theme';
-import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useAccounts } from '@/shared/hooks/use-accounts';
+import { useTheme } from '@/shared/hooks/use-theme';
+import { useThemedStyles } from '@/shared/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
-import { useAuth } from '@/lib/authStore';
-import { buildStatementHtml, exportStatementPdf } from '@/lib/statementPdf';
+import { useAuth } from '@/features/auth/store/authStore';
+import { buildStatementHtml, exportStatementPdf } from '@/features/statement/statementPdf';
 import type { AccountStatement, Transaction } from '@/models';
 import { getStatement } from '@/services/transaction.service';
 

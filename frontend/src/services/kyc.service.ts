@@ -1,4 +1,4 @@
-import { MOCK_CCCD_QR } from '@/lib/mockData';
+import { MOCK_CCCD_QR } from '@/shared/lib/mockData';
 import type { KycProfile, SubmitKycRequest, SubmitKycResponse, User } from '@/models';
 
 // Server kiểm tra người thật và so khớp khuôn mặt nên lâu hơn các API khác một chút.

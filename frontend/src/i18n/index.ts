@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { useSettings } from '@/lib/settingsStore';
+import { useSettings } from '@/features/settings/store/settingsStore';
 import type { AppLanguage } from '@/models';
 
 import { en } from './locales/en';

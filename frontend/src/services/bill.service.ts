@@ -1,5 +1,5 @@
 import { removeDiacritics } from '@/helpers';
-import { mockAccounts, mockBillDirectory, mockBillHistory, mockBillProviders, mockSavedBills } from '@/lib/mockData';
+import { mockAccounts, mockBillDirectory, mockBillHistory, mockBillProviders, mockSavedBills } from '@/shared/lib/mockData';
 import type {
   AuthMethod,
   BillDetail,
