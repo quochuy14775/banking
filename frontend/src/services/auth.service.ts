@@ -1,7 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { AUTH_API_URL, USE_MOCK_AUTH } from '@/constants/api';
+import { normalizeUsername } from '@/helpers';
+import { apiRequest, type ApiProblem } from '@/lib/apiClient';
 import { mockUser } from '@/lib/mockData';
-import type { FaceIdLoginRequest, LoginRequest, LoginResponse, RememberedUser, User } from '@/models';
+import type {
+  FaceIdLoginRequest,
+  LoginRequest,
+  LoginResponse,
+  RegisterField,
+  RegisteredUser,
+  RegisterRequest,
+  RegisterResponse,
+  RememberedUser,
+  User,
+} from '@/models';
 import { withKycProfile } from '@/services/kyc.service';
 
 const MOCK_DELAY_MS = 600;
@@ -39,6 +52,60 @@ export async function loginWithFaceId(req: FaceIdLoginRequest): Promise<LoginRes
   if (!req.username) return { success: false, message: 'Chưa có tài khoản đăng nhập trên máy này.' };
   await delay(MOCK_DELAY_MS);
   return { success: true, token: 'mock-token', user: withKycProfile({ ...mockUser, username: req.username }) };
+}
+
+/**
+ * Đăng ký tài khoản đăng nhập cho khách có hồ sơ đăng ký đã được duyệt. Có địa chỉ auth-service
+ * (EXPO_PUBLIC_AUTH_API_URL) thì gọi backend thật, không có thì dùng mock. Màn hình đã kiểm tra định dạng trước;
+ * ở đây chủ yếu xử lý kết quả từ backend.
+ */
+export async function register(req: RegisterRequest): Promise<RegisterResponse> {
+  const body: RegisterRequest = { ...req, username: normalizeUsername(req.username) };
+  if (USE_MOCK_AUTH) return registerMock(body);
+
+  const result = await apiRequest<RegisteredUser>(AUTH_API_URL, '/api/auth/register', { method: 'POST', body });
+  if (result.ok) return { success: true, user: result.data };
+  return toRegisterFailure(result.problem);
+}
+
+// Đổi lỗi của auth-service thành lỗi hiện trên form: lỗi gắn với một ô thì hiện dưới ô đó.
+function toRegisterFailure(problem: ApiProblem): RegisterResponse {
+  if (problem.status === 0) {
+    return { success: false, message: 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.' };
+  }
+  switch (problem.code) {
+    case 'AUTH_USERNAME_TAKEN':
+      return { success: false, fieldErrors: { username: problem.message ?? 'Tên đăng nhập đã được sử dụng.' } };
+    case 'AUTH_WEAK_PASSWORD':
+      return { success: false, fieldErrors: { password: problem.message ?? 'Mật khẩu chưa đạt yêu cầu.' } };
+    // Hồ sơ đăng ký chưa duyệt, sai mã hồ sơ, hoặc khách đã có tài khoản: hiện câu của backend dưới form.
+    case 'AUTH_ONBOARDING_NOT_APPROVED':
+    case 'AUTH_ONBOARDING_NOT_FOUND':
+    case 'AUTH_CUSTOMER_HAS_LOGIN':
+      return { success: false, message: problem.message ?? 'Chưa tạo được tài khoản cho hồ sơ này.' };
+    case 'VALIDATION_FAILED':
+      return { success: false, message: problem.message, fieldErrors: pickRegisterFields(problem.fieldErrors) };
+    default:
+      return { success: false, message: problem.message ?? 'Đăng ký thất bại, vui lòng thử lại.' };
+  }
+}
+
+function pickRegisterFields(errors: Record<string, string> | undefined): RegisterResponse['fieldErrors'] {
+  if (!errors) return undefined;
+  const fields: RegisterField[] = ['username', 'password'];
+  return Object.fromEntries(fields.filter((field) => errors[field]).map((field) => [field, errors[field]]));
+}
+
+// Mock: tên của người dùng demo và các tên vừa đăng ký trong phiên này coi như đã có người dùng.
+const mockTakenUsernames = new Set([normalizeUsername(mockUser.username)]);
+
+async function registerMock(req: RegisterRequest): Promise<RegisterResponse> {
+  await delay(MOCK_DELAY_MS);
+  if (mockTakenUsernames.has(req.username)) {
+    return { success: false, fieldErrors: { username: 'Tên đăng nhập đã được sử dụng.' } };
+  }
+  mockTakenUsernames.add(req.username);
+  return { success: true, user: { id: `mock-${Date.now()}`, username: req.username, roles: ['CUSTOMER'] } };
 }
 
 export async function getRememberedUser(): Promise<RememberedUser | null> {

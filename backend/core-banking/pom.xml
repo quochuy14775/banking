@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.2</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>vn.corebank</groupId>
+    <artifactId>core-banking</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <java.version>25</java.version>
+        <!-- Spring Boot không quản lý phiên bản ArchUnit nên khai báo ở đây. -->
+        <archunit.version>1.5.1</archunit.version>
+        <springdoc.version>3.2.0</springdoc.version>
+    </properties>
+
+    <modules>
+        <!-- common phải đứng trước vì các service phụ thuộc vào nó. -->
+        <module>common</module>
+        <module>account-service</module>
+        <module>auth-service</module>
+        <module>customer-service</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Các service khai báo common mà không cần ghi phiên bản. -->
+            <dependency>
+                <groupId>vn.corebank</groupId>
+                <artifactId>common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Test kiến trúc: kiểm tra quy tắc giữa các tầng và các package (miễn phí, mã nguồn mở). -->
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit</artifactId>
+                <version>${archunit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- Cấu hình build dùng chung cho mọi module, để service nào cũng build giống nhau. -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Từ JDK 23, javac không tự chạy annotation processor nữa, nên phải khai báo Lombok ở đây. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+                <!-- Service nào khai báo plugin này đều tự loại Lombok khỏi file jar chạy thật. -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

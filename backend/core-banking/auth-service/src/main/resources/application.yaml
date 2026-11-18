@@ -1,0 +1,53 @@
+server:
+  port: 9003
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/core-banking?currentSchema=auth
+    username: postgres
+    password: 123
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    default-schema: auth
+    schemas: auth
+
+corebank:
+  auth:
+    # Định danh của nơi cấp token, ghi vào claim "iss". Các service khác kiểm tra token phải khớp giá trị này.
+    issuer: http://localhost:9003
+    access-token-ttl: 15m
+    refresh-token-ttl: 7d
+    # Nhập sai mật khẩu đủ số lần này liên tiếp thì khóa đăng nhập trong lock-duration.
+    max-failed-attempts: 5
+    lock-duration: 15m
+  cors:
+    # Origin của app web được gọi API từ trình duyệt (Expo web chạy ở cổng 8081).
+    # App điện thoại native, Postman, curl không bị CORS chặn nên không cần khai báo ở đây.
+    allowed-origins:
+      - http://192.169.1.184:8081
+      - http://localhost:8081
+  customer-service:
+    # auth-service hỏi customer-service hồ sơ đăng ký đã được duyệt chưa trước khi tạo tài khoản đăng nhập cho khách.
+    url: http://localhost:9001
+    # Phải trùng corebank.customer.internal-token của customer-service. Giá trị mặc định chỉ dùng trên máy dev;
+    # môi trường khác đặt biến CORE_BANKING_INTERNAL_TOKEN.
+    internal-token: ${CORE_BANKING_INTERNAL_TOKEN:dev-internal-token-change-me}
+  bootstrap-admin:
+    # Tài khoản nhân viên duyệt hồ sơ, tạo sẵn khi khởi động nếu chưa có. Để trống thì không tạo.
+    # Đặt qua biến môi trường, không ghi mật khẩu vào file này.
+    username: ${CORE_BANKING_ADMIN_USERNAME:}
+    password: ${CORE_BANKING_ADMIN_PASSWORD:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

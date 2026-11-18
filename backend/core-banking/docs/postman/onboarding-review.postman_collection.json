@@ -1,0 +1,93 @@
+{
+  "info": {
+    "name": "Duyệt hồ sơ đăng ký (nhân viên)",
+    "description": "Nhân viên duyệt hồ sơ đăng ký mở tài khoản ở customer-service. Chạy theo thứ tự: đăng nhập admin (lưu accessToken), xem danh sách chờ duyệt (lưu applicationId của hồ sơ cũ nhất), xem chi tiết và ảnh, rồi duyệt HOẶC từ chối.\n\nTài khoản admin tạo sẵn khi auth-service khởi động nếu đặt biến môi trường CORE_BANKING_ADMIN_USERNAME và CORE_BANKING_ADMIN_PASSWORD. Điền hai giá trị đó vào biến adminUsername, adminPassword của collection (không lưu mật khẩu vào file).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "authUrl", "value": "http://localhost:9003" },
+    { "key": "customerUrl", "value": "http://localhost:9001" },
+    { "key": "adminUsername", "value": "" },
+    { "key": "adminPassword", "value": "" },
+    { "key": "accessToken", "value": "" },
+    { "key": "applicationId", "value": "" },
+    { "key": "rejectReason", "value": "Ảnh CCCD bị mờ, vui lòng chụp lại." }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "1. Đăng nhập admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Đăng nhập được', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('accessToken', pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{authUrl}}/api/auth/login",
+        "body": { "mode": "raw", "raw": "{\"username\": \"{{adminUsername}}\", \"password\": \"{{adminPassword}}\"}" }
+      }
+    },
+    {
+      "name": "2. Danh sách hồ sơ chờ duyệt",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Xem được danh sách', () => pm.response.to.have.status(200));",
+              "const items = pm.response.json().items;",
+              "if (items.length > 0) pm.collectionVariables.set('applicationId', items[0].id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{customerUrl}}/api/admin/onboarding/applications?status=PENDING_REVIEW&page=0&size=20"
+      }
+    },
+    {
+      "name": "3. Chi tiết hồ sơ",
+      "request": { "method": "GET", "url": "{{customerUrl}}/api/admin/onboarding/applications/{{applicationId}}" }
+    },
+    {
+      "name": "4a. Ảnh mặt trước CCCD",
+      "request": { "method": "GET", "url": "{{customerUrl}}/api/admin/onboarding/applications/{{applicationId}}/documents/ID_FRONT" }
+    },
+    {
+      "name": "4b. Ảnh mặt sau CCCD",
+      "request": { "method": "GET", "url": "{{customerUrl}}/api/admin/onboarding/applications/{{applicationId}}/documents/ID_BACK" }
+    },
+    {
+      "name": "4c. Ảnh chân dung",
+      "request": { "method": "GET", "url": "{{customerUrl}}/api/admin/onboarding/applications/{{applicationId}}/documents/PORTRAIT" }
+    },
+    {
+      "name": "5a. Duyệt hồ sơ",
+      "request": { "method": "POST", "url": "{{customerUrl}}/api/admin/onboarding/applications/{{applicationId}}/approve" }
+    },
+    {
+      "name": "5b. Từ chối hồ sơ",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{customerUrl}}/api/admin/onboarding/applications/{{applicationId}}/reject",
+        "body": { "mode": "raw", "raw": "{\"reason\": \"{{rejectReason}}\"}" }
+      }
+    }
+  ]
+}

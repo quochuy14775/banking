@@ -1,0 +1,41 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: customer-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/core-banking?currentSchema=customer
+    username: postgres
+    password: 123
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    default-schema: customer
+    schemas: customer
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Kiểm access token do auth-service cấp: lấy khóa công khai từ JWKS, claim iss phải khớp issuer của auth-service.
+          jwk-set-uri: http://localhost:9003/.well-known/jwks.json
+          issuer-uri: http://localhost:9003
+
+corebank:
+  cors:
+    # Origin của app web được gọi API từ trình duyệt (Expo web chạy ở cổng 8081).
+    # App điện thoại native, Postman, curl không bị CORS chặn nên không cần khai báo ở đây.
+    allowed-origins:
+      - http://localhost:8081
+  customer:
+    # Mã bí mật dùng chung với auth-service để gọi API nội bộ /internal/**. Giá trị mặc định chỉ dùng khi chạy trên máy dev;
+    # môi trường khác phải đặt biến CORE_BANKING_INTERNAL_TOKEN (cùng giá trị ở auth-service).
+    internal-token: ${CORE_BANKING_INTERNAL_TOKEN:dev-internal-token-change-me}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

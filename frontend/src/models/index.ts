@@ -7,6 +7,7 @@ export * from './financial-health';
 export * from './insight';
 export * from './kyc';
 export * from './notification';
+export * from './onboarding';
 export * from './quick-action';
 export * from './settings';
 export * from './smart-otp';

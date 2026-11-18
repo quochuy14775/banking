@@ -1,0 +1,38 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "customer-service",
+      "runtimeExecutable": "java",
+      "runtimeArgs": [
+        "-jar",
+        "customer-service/target/customer-service-1.0-SNAPSHOT.jar",
+        "--corebank.cors.allowed-origins=http://localhost:8081,http://localhost:8082",
+        "--server.port=9011"
+      ],
+      "port": 9011
+    },
+    {
+      "name": "auth-service",
+      "runtimeExecutable": "java",
+      "runtimeArgs": [
+        "-jar",
+        "auth-service/target/auth-service-1.0-SNAPSHOT.jar",
+        "--corebank.cors.allowed-origins=http://localhost:8081,http://localhost:8082",
+        "--corebank.bootstrap-admin.username=admin.demo",
+        "--corebank.bootstrap-admin.password=Demo-pntbjk_h5VGn9",
+        "--corebank.customer-service.url=http://localhost:9011"
+      ],
+      "port": 9003
+    },
+    {
+      "name": "expo-web",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set EXPO_PUBLIC_CUSTOMER_API_URL=http://localhost:9011&& set EXPO_PUBLIC_AUTH_API_URL=http://localhost:9003&& npm --prefix ../../frontend run web -- --port 8082"
+      ],
+      "port": 8082
+    }
+  ]
+}

@@ -8,6 +8,7 @@ export * from './home';
 export * from './kyc';
 export * from './login';
 export * from './notifications';
+export * from './onboarding';
 export * from './profile';
 export * from './qr';
 export * from './quick-actions';

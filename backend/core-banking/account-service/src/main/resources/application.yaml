@@ -1,0 +1,36 @@
+server:
+  port: 9002
+
+spring:
+  application:
+    name: account-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/core-banking?currentSchema=account
+    username: postgres
+    password: 123
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    default-schema: account
+    schemas: account
+
+corebank:
+  account:
+    # Đầu số tài khoản (4 chữ số). Số tài khoản = đầu số + 7 chữ số thứ tự + 1 chữ số kiểm tra.
+    number-prefix: "1903"
+  cors:
+    # Origin của app web được gọi API từ trình duyệt (Expo web chạy ở cổng 8081).
+    # App điện thoại native, Postman, curl không bị CORS chặn nên không cần khai báo ở đây.
+    allowed-origins:
+      - http://localhost:8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

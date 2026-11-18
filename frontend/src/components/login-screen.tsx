@@ -21,6 +21,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import AppLogo from '@/components/app-logo';
 import FaceScanModal from '@/components/face-scan-modal';
+import OnboardingScreen from '@/components/onboarding-screen';
+import RegisterScreen from '@/components/register-screen';
 import UserAvatar from '@/components/user-avatar';
 import { CommonIcons, LoginIcons } from '@/constants/icons';
 import { Radius, Spacing, Typography, type ThemeColors, IconSize } from '@/constants/theme';
@@ -28,7 +30,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useI18n } from '@/i18n';
 import { useAuth } from '@/lib/authStore';
-import type { LoginRequest, RememberedUser } from '@/models';
+import { clearSavedApplication } from '@/lib/onboardingStore';
+import type { LoginRequest, RememberedUser, SavedApplication } from '@/models';
 import { forgetRememberedUser, getRememberedUser } from '@/services/auth.service';
 
 // Các khối hiện lần lượt một lần khi mở màn, trượt nhẹ từ dưới lên, không nảy.
@@ -79,6 +82,13 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [faceAvailable, setFaceAvailable] = useState(false);
   const [simulating, setSimulating] = useState(false);
+  // Đăng ký hiện thay chỗ form đăng nhập; quay lại thì form vẫn giữ nguyên trạng thái. Đăng ký gồm hai phần:
+  // `onboarding` (gửi hồ sơ CCCD + ảnh, nhân viên duyệt, customer-service) rồi `register` (tạo tài khoản đăng nhập
+  // cho hồ sơ đã duyệt, auth-service).
+  const [mode, setMode] = useState<'login' | 'onboarding' | 'register'>('login');
+  const [approvedApplication, setApprovedApplication] = useState<SavedApplication | null>(null);
+  // Thông báo thành công (vd. vừa đăng ký xong), khác với lỗi.
+  const [notice, setNotice] = useState<string | null>(null);
   const passwordRef = useRef<TextInputInstance>(null);
 
   useEffect(() => {
@@ -100,6 +110,26 @@ export default function LoginScreen() {
     setUsername('');
     setPassword('');
     setError(null);
+    setNotice(null);
+  };
+
+  const openRegister = () => {
+    Keyboard.dismiss();
+    setError(null);
+    setNotice(null);
+    setMode('onboarding');
+  };
+
+  // Đăng ký xong: về form đăng nhập, điền sẵn tên vừa tạo, chỉ còn nhập mật khẩu.
+  const handleRegistered = (newUsername: string) => {
+    // Hồ sơ đăng ký đã dùng xong (đã có tài khoản đăng nhập): quên trên máy.
+    void clearSavedApplication();
+    setApprovedApplication(null);
+    setUsername(newUsername);
+    setPassword('');
+    setError(null);
+    setNotice(t('login.registered'));
+    setMode('login');
   };
 
   const handleSubmit = async () => {
@@ -111,6 +141,7 @@ export default function LoginScreen() {
       return;
     }
     setError(null);
+    setNotice(null);
     setLoading(true);
     try {
       const res = await login(req);
@@ -171,6 +202,28 @@ export default function LoginScreen() {
 
   const iconColor = (field: Field) => (focused === field ? theme.primary : theme.textSecondary);
 
+  if (mode === 'onboarding') {
+    return (
+      <OnboardingScreen
+        onCancel={() => setMode('login')}
+        onApproved={(application) => {
+          setApprovedApplication(application);
+          setMode('register');
+        }}
+      />
+    );
+  }
+
+  if (mode === 'register' && approvedApplication) {
+    return (
+      <RegisterScreen
+        application={approvedApplication}
+        onCancel={() => setMode('onboarding')}
+        onRegistered={handleRegistered}
+      />
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       {/* Nền trang trí: quầng xanh nhạt phía trên và hai khối tròn mờ, không bắt chạm. */}
@@ -209,6 +262,12 @@ export default function LoginScreen() {
           )}
 
           <Animated.View entering={enter(120)} style={[styles.form, styles.card]}>
+            {notice ? (
+              <Text style={styles.notice} accessibilityLiveRegion="polite">
+                {notice}
+              </Text>
+            ) : null}
+
             {/* Ô nhập gộp một khối; dòng đang nhập có nền nhạt và vạch màu bên trái. */}
             <View style={styles.group}>
               {!remembered && (
@@ -318,16 +377,22 @@ export default function LoginScreen() {
           </Animated.View>
 
           {remembered ? (
-            <Animated.View entering={enter(240)} style={styles.switchRow}>
+            <Animated.View key="returning-footer" entering={enter(240)} style={styles.switchRow}>
               <Text style={styles.note}>{t('login.notYou')}</Text>
               <Pressable onPress={switchAccount} hitSlop={8} accessibilityRole="button">
                 <Text style={styles.switchText}>{t('login.switchAccount')}</Text>
               </Pressable>
             </Animated.View>
           ) : (
-            <Animated.Text entering={enter(240)} style={[styles.note, styles.noteSpaced]}>
-              {t('login.demoNote')}
-            </Animated.Text>
+            <Animated.View key="new-footer" entering={enter(240)}>
+              <View style={styles.switchRow}>
+                <Text style={styles.note}>{t('login.noAccount')}</Text>
+                <Pressable onPress={openRegister} hitSlop={8} accessibilityRole="button" disabled={loading}>
+                  <Text style={styles.switchText}>{t('login.register')}</Text>
+                </Pressable>
+              </View>
+              <Text style={[styles.note, styles.noteSpaced]}>{t('login.demoNote')}</Text>
+            </Animated.View>
           )}
         </Pressable>
       </KeyboardAvoidingView>
@@ -399,6 +464,16 @@ function createStyles(theme: ThemeColors) {
     forgot: { alignSelf: 'flex-end', marginTop: 14 },
     forgotText: { ...Typography.callout, color: theme.primary, fontWeight: '600' },
     error: { ...Typography.callout, marginTop: 12, color: theme.danger },
+    notice: {
+      ...Typography.callout,
+      marginBottom: 14,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: Radius.md,
+      overflow: 'hidden',
+      color: theme.success,
+      backgroundColor: theme.successSoft,
+    },
     actions: { flexDirection: 'row', gap: 12, marginTop: 20 },
     button: { flex: 1, height: ACTION_HEIGHT, borderRadius: Radius.lg, overflow: 'hidden', boxShadow: theme.fabShadow },
     buttonFill: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.primary },
